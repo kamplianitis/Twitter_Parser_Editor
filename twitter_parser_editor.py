@@ -333,13 +333,18 @@ def updateFile(filename)-> None:
   while cur_line < change_lines:
     if cur_line == changesList[lines_checked][0]:
       if changesList[lines_checked][1] != 'deleted':
-        writeFile.write(changesList[lines_checked][2] + "\n")
+        writeFile.write(str(changesList[lines_checked][2]) + "\n")
       if cur_line < file_lines:
         readFile.readline() # so the line checker is correct
       lines_checked = lines_checked +1 # update the lines checked already
     else:
       readLine = readFile.readline()
       writeFile.write(readLine)
+  #update the values
+  changesList.clear()
+  deletion_numbers_list.clear()
+  globals['file_lines'] = change_lines
+  globals['deletions'] = 0 
 
 '''
   checkAndExecute
