@@ -151,6 +151,7 @@ def check_deletions(line: int)-> int:
 
 
 def read_n_to_last_line(filename, n = 1):
+  num_newlines = 0
   try:
     filename.seek(-2, os.SEEK_END)    
     while num_newlines < n:
@@ -351,7 +352,7 @@ def updateFile(filename)-> None:
 
   #TODO: Check for correct. --> done
   #TODO: Check max args based on file. --> abort 
-  #TODO: Recomendation about the error based on command. --> done
+  #TODO: Recommendation about the error based on command. --> done
   
   Arguments:
     Arg1 : (str) option
