@@ -149,6 +149,18 @@ def check_deletions(line: int)-> int:
   return int (bisect(deletion_numbers_list,line))
 
 
+'''
+  read_n_to_last_line
+
+  Arguments:
+    Arg1: filename
+    Arg2: number of lines from EOF, default = 1
+  Returns: 
+    int -> EOF
+  Description:
+    Reads the line that exists n number of lines from EOF. Defaults to 1, since defaulting to 0
+    would end up with returning the EOF character itself.
+'''
 def read_n_to_last_line(filename, n = 1):
   num_newlines = 0
   try:
