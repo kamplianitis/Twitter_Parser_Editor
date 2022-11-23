@@ -1,9 +1,9 @@
 #####################LIBRARIES###################################
-from datetime import datetime
-import sys
-import os
-import json
-from bisect import bisect
+from datetime import datetime #create tweet -> for date, time 
+import sys # sys.exit, exceptions
+import os # io, exceptions
+import json # decode binary file to ascii
+from bisect import bisect # checks in a list where a number should be put. e.g. list=[1,5,10,58] test=6 return 2
 #####################GLOBAL VARIABLES#############################
 # changes List.. this will be list in order to not be immutable
 '''
@@ -13,8 +13,8 @@ changesList = [] #list that keeps the changes done to the file
 change_lines = 0 #keeps the number of lines afte the changes 
 curr_tweet_id = 0 #current tweet id 
 deletions = 0 # number of deletions made
-deletion_numbers_list=[]
-file_lines =0
+deletion_numbers_list=[] # keeps the number of lines that are going to be deleted
+file_lines =0 # initial lines of the file
 ######################FUNCTION PART#############################
 # changes List.. this will be list in order to not be immutable
 
@@ -27,7 +27,6 @@ file_lines =0
     int: number of lines in given file
   Description: 
     Count the lines of given file
-
 '''
 def file_len(f): 
     for i, _ in enumerate(f): # _ goes to last expression. practically throws the last line read all the time to parse through the file
@@ -184,20 +183,21 @@ def readSpecificTweet(line: int, filename) -> None:
     print("No such many tweets")
   else:
     if deletions ==0:
-      string = search_in_changelist(line)
-      if string == None:
+      tweet_text = search_in_changelist(line)
+      if tweet_text == None:
         search_line = file_lines - line +1 #find the corresponding line from the end
+        ###### needs json decode 
         read_n_to_last_line(filename, search_line)
       else:
-        print("The text of the tweet with tweet id "+ str(line) +" is: \n" +string)
+        print("The text of the tweet with tweet id "+ str(line) +" is: \n" + tweet_text)
     else:
       new_line = line + check_deletions(line) 
-      string = search_in_changelist(new_line)
-      if string == None:
+      tweet_text = search_in_changelist(new_line)
+      if tweet_text == None:
         search_line = file_lines - new_line +1 #find the corresponding line from the end
         read_n_to_last_line(filename, search_line)
       else:
-        print("The text of the tweet with tweet id "+ str(line) +" is: \n" +string)
+        print("The text of the tweet with tweet id "+ str(line) +" is: \n" +tweet_text)
       globals['curr_tweet_id'] = line
 
 
@@ -327,6 +327,7 @@ def read_one_up(filename)->None:
 
 
 def updateFile(filename)-> None:
+  #close the file
   readFile = open("testfile.json", "r")
   writeFile = open("testfile1.json", "w")
   cur_line=0
@@ -425,9 +426,9 @@ try:
     #open as binary helps with SEEK etc.
     JsonFile = open("testfile.json", "rb")
     print("Please wait while the file is opening")
-    globals['file_lines'] = file_len(JsonFile)
+    file_lines = file_len(JsonFile)
     change_lines = file_lines
-    print(file_lines)
+    #print(file_lines)
 except OSError: 
     sys.exit("File opening failed. The program will now terminate")
 
