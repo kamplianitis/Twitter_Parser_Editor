@@ -3,6 +3,7 @@ from datetime import datetime #create tweet -> for date, time
 import sys # sys.exit, exceptions
 import os # io, exceptions
 import json # decode binary file to ascii
+import logging
 from bisect import bisect # checks in a list where a number should be put. e.g. list=[1,5,10,58] test=6 return 2
 #####################GLOBAL VARIABLES#############################
 # changes List.. this will be list in order to not be immutable
@@ -15,6 +16,12 @@ curr_tweet_id = 0 #current tweet id
 deletions = 0 # number of deletions made
 deletion_numbers_list=[] # keeps the number of lines that are going to be deleted
 file_lines =0 # initial lines of the file
+
+'''
+Enabling logging functionality
+'''
+logging.basicConfig(filename='logs.log', filemode="w", level=logging.INFO,
+                    format='%(asctime)s:%(name)s:%(levelname)s:%(message)s')
 ######################FUNCTION PART#############################
 # changes List.. this will be list in order to not be immutable
 
@@ -58,6 +65,7 @@ def createTweet() -> None: #testing function # testing done
 
   #update curr_tweet_id to the new one
   globals()['curr_tweet_id'] = change_lines
+  logging.info('SUCCESS: Created tweet')
  
 
 '''
@@ -129,7 +137,8 @@ def deleteTweet(curr_tweet_id:int)-> None:
   globals()['deletions'] = deletions +1
   globals()['change_lines'] = change_lines -1
   # update the list of deletions in order to keep track 
-  deletion_numbers_list.append(curr_tweet_id) 
+  deletion_numbers_list.append(curr_tweet_id)
+  logging.info('SUCCESS: Tweet deleted')
 
 
 '''
@@ -146,7 +155,8 @@ def deleteTweet(curr_tweet_id:int)-> None:
 def check_deletions(line: int)-> int:
   # sort the array
   deletion_numbers_list.sort()
-  return int (bisect(deletion_numbers_list,line))
+  logging.info('SUCCESS: Deletions sorted')
+  return int (bisect(deletion_numbers_list, line))
 
 
 '''
@@ -170,8 +180,11 @@ def read_n_to_last_line(filename, n = 1):
       if filename.read(1) == b'\n':
         num_newlines += 1
   except OSError:
+    logging.exception('FAILED: Seeking EOF')
     filename.seek(0)
     last_line = filename.readline().decode()
+
+  logging.info('SUCCESS: Read n lines from EOF')
   return last_line
 
 
@@ -211,7 +224,7 @@ def readSpecificTweet(line: int, filename) -> None:
       else:
         print("The text of the tweet with tweet id "+ str(line) +" is: \n" +tweet_text)
       globals['curr_tweet_id'] = line
-
+  logging.info('SUCCESS: Read tweet_id tweet')
 
 '''
   updateTweet
@@ -232,7 +245,7 @@ def updateTweet(line: int) -> None:
       changesList[check_str] = [line, "update" ,{"text":tweet_text , "created_at": date.strftime("%d/%m/%Y %H:%M:%S")}]
   #update curr_tweet_id to the new one
   globals()['curr_tweet_id'] = line
-
+  logging.info('SUCCESS: Tweet updated')
 
 '''
   readLastTweet
@@ -271,7 +284,7 @@ def readLastTweet(JsonFile) -> None:
     sys.exit("Possible corrupted file.\nAll changes have been reverted.\nProgram Exiting")
   #Update curr_tweet_id. change lines will always have the right amount of lines that should be in the file
   globals()['curr_tweet_id'] = change_lines
-
+  logging.info('SUCCESS: Read previous tweet')
 
 '''
   help
@@ -293,7 +306,45 @@ def help(): #testing function # testing done
   print("q : Quit without save")
   print("w : (Over)write file to disk")
   print("x : Exit and save")
+  logging.info('SUCCESS: Displayed help message')
 
+'''
+  #TODO: Test this function
+  read_tweet
+
+  Arguments:
+    Arg1: filename
+    Arg2: int, current tweet id
+    Arg3: int, mode, default = 0
+  Returns: 
+    returns -> None
+  Description:
+    Reads the tweet with the provided tweet_id value. Mode can be -1, 0, 1, which represents the upper adjacent 
+    tweet, current tweet, and lower adjacent tweet. This value is passed by other system functions and not the user.
+'''
+def read_tweet(filename,
+               curr_tweet_id: int,
+               mode: int = 0) -> None:
+  if curr_tweet_id + mode < change_lines:
+    deletion_position = check_deletions()
+    if deletion_position == 0:
+      tweet_text = search_in_changelist(curr_tweet_id + mode)
+      if tweet_text is None:
+        search_line = file_lines - (curr_tweet_id + mode) + mode #find the corresponding line from the end
+        read_n_to_last_line(filename, search_line)
+      else:
+        print("The text of the tweet with tweet id "+ str(curr_tweet_id+1) +" is: \n" + tweet_text)
+    else:
+      tweet_text = search_in_changelist(curr_tweet_id + mode + deletion_position)
+      if tweet_text is None:
+        search_line = file_lines - (curr_tweet_id + mode) + mode #find the corresponding line from the end
+        read_n_to_last_line(filename, search_line)
+      else:
+        print("The text of the tweet with tweet id "+ str(curr_tweet_id + mode) +" is: \n" + tweet_text)
+    globals['curr_tweet_id'] = curr_tweet_id+1
+  else: # we are at the end of the file
+    print("There are no more lines")
+  logging.info('SUCCESS: Read current tweet')
 
 def read_one_down(filename)->None:
   if curr_tweet_id+1 < change_lines:
@@ -315,6 +366,7 @@ def read_one_down(filename)->None:
     globals['curr_tweet_id'] = curr_tweet_id+1
   else: # we are at the end of the file
     print("There are no more lines")
+  logging.info('SUCCESS: Read lower adjacent tweet')
 
 def read_one_up(filename)->None:
   if curr_tweet_id-1 < 0:
@@ -336,7 +388,7 @@ def read_one_up(filename)->None:
       else:
         print("The text of the tweet with tweet id "+ str(curr_tweet_id+1) +" is: \n" +string)
     globals['curr_tweet_id'] = curr_tweet_id-1
-
+  logging.info('SUCCESS: Read upper adjacent tweet')
 
 def updateFile(filename)-> None:
   #close the file
@@ -358,7 +410,8 @@ def updateFile(filename)-> None:
   changesList.clear()
   deletion_numbers_list.clear()
   globals['file_lines'] = change_lines
-  globals['deletions'] = 0 
+  globals['deletions'] = 0
+  logging.info('SUCCESS: Updated file')
 
 '''
   checkAndExecute
@@ -384,48 +437,63 @@ def updateFile(filename)-> None:
 def checkAndExecute(option:str) -> None: 
   if len(option) == 1: 
     if option == 'C' or option == 'c': # testing scenario # testing done
+      logging.info('Called "CREATE" process')
       createTweet()
-    elif option == 'd' or option == 'D': 
+    elif option == 'd' or option == 'D':
+      logging.info('Called "DELETE" process')
       print(option + " d/D")
     elif option == '$':
+      logging.info('Called "READ_LAST" process')
       readLastTweet(JsonFile)
     elif option == '-':
+      logging.info('Called "READ_PREVIOUS" process')
       print(option + " -")
-    elif option == '+': 
+    elif option == '+':
+      logging.info('Called "READ_NEXT" process')
       print(option + " +")
     elif option == '=': # testing scenario # testing done
+      logging.info('Called "PRINT_CURRENT_ID" process')
       print(curr_tweet_id)
     elif option == 'q' or option == 'Q': # testing scenario # testing done
+      logging.info('Called "Q" function')
       sys.exit("\nExiting program")
     elif option == 'w' or option == 'W':
+      logging.info('Called "WRITE" process')
       print(option + " w/W")
     elif option == 'x' or option == 'X':
+      logging.info('Called "x" function')
       sys.exit("\nExiting program")
     elif option =='h':  #testing scenario # testing done
+      logging.info('Called for help')
       help()
     else: # testing scenario #testing done
-      print("\nError: Wrong given arguement")
+      logging.info('Wrong argument input')
+      print("\nError: Wrong given argument")
       help()
-  elif len(option)> 1: 
+  elif len(option) > 1:
     if option[0] == 'r':
+      logging.info('Called "READ_TWEET" function')
       print(option)
       optionT = option.split('r', 1)
       try:
         readSpecificTweet(int(optionT[1])) 
       except: # testing scenario # testing done
-          print("\nThe given arguement does not translate to integer")
-          help()
-    elif option[0] == 'u': 
+        logging.exception('Invalid argument for "READ_TWEET" input')
+        print("\nThe given argument does not translate to integer")
+        help()
+    elif option[0] == 'u':
+      logging.info('Called "UPDATE_TWEET" function')
       optionT = option.split('u')
       try:
         updateTweet(int(optionT[1]))
       except: # testing scenario # testing done
-          print("\nThe given arguement does not translate to integer")
-          help()
+        logging.exception('Invalid argument for "UPDATE_TWEET" input')
+        print("\nThe given argument does not translate to integer")
+        help()
     elif option == "help": # testing scenario # testing done
       help()
     else:  # testing scenario # testing done
-      print("\nError: Wrong given arguement")
+      print("\nError: Wrong given argument")
       help()
 
 
@@ -440,8 +508,10 @@ try:
     print("Please wait while the file is opening")
     file_lines = file_len(JsonFile)
     change_lines = file_lines
+    logging.info('File opened successfully')
     #print(file_lines)
-except OSError: 
+except OSError:
+    logging.exception('Failed to open specified file')
     sys.exit("File opening failed. The program will now terminate")
 
 # The following code runs as a do while
