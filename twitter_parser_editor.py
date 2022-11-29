@@ -4,7 +4,34 @@ import sys # sys.exit, exceptions
 import os # io, exceptions
 import json # decode binary file to ascii
 import logging
-from bisect import bisect # checks in a list where a number should be put. e.g. list=[1,5,10,58] test=6 return 2
+from bisect import bisect # checks in a list where a number should be put. e.g. list=[1,5,10,58] test=6 return 2s
+
+###################TESTING########################################
+from unittest import TestCase
+from unittest import mock
+from nose.tools import *
+
+
+class TestCreateTweet(TestCase):
+    def test_createTweet(self):
+        print("CreateTweet Test:")
+        tweet_text = "Test Create"
+        date = datetime.now()
+        expected_changes_list = [1, "create", {"text": tweet_text, "created_at": date.strftime("%d/%m/%Y %H:%M:%S")}]
+        original_input = mock.builtins.input
+        mock.builtins.input = lambda _: tweet_text
+        createTweet()
+        self.assertListEqual([expected_changes_list], changesList,msg="\tCHECK TWEET CHANGESLIST: FAIL")
+        print("\tCHECK TWEET CHANGESLIST: PASS")
+        self.assertEqual(change_lines, 1, msg="\tCHECK FILE LINES: FAIL")
+        print("\tCHECK FILE LINES: PASS")
+        self.assertEqual(curr_tweet_id, 1, msg="\tCHECK CURRENT TWEET ID: FAIL")
+        print("\tCHECK CURRENT TWEET ID: PASS")
+
+
+if __name__ == '__main__':
+    unittest.main()
+
 #####################GLOBAL VARIABLES#############################
 # changes List.. this will be list in order to not be immutable
 '''
@@ -55,18 +82,17 @@ def file_len(f):
 def createTweet() -> None: #testing function # testing done
   tweet_text = input("Please share your thoughts:\t")
   # need the first dict to keep track of twitter_id in the changes list and update the 
-  globals()['change_lines'] = change_lines +1
+  globals()['change_lines'] = change_lines + 1
   # take the date from the lib
   date = datetime.now() 
 
   # append to the changes list. 
   # format the date while putting in dictionary
-  changesList.append([change_lines, "create" ,{"text":tweet_text , "created_at": date.strftime("%d/%m/%Y %H:%M:%S")}])
+  changesList.append([change_lines, "create", {"text": tweet_text, "created_at": date.strftime("%d/%m/%Y %H:%M:%S")}])
 
   #update curr_tweet_id to the new one
   globals()['curr_tweet_id'] = change_lines
   logging.info('SUCCESS: Created tweet')
- 
 
 '''
   search_in_changelist
@@ -390,8 +416,10 @@ def read_one_up(filename)->None:
     globals['curr_tweet_id'] = curr_tweet_id-1
   logging.info('SUCCESS: Read upper adjacent tweet')
 
-def updateFile(filename)-> None:
+def updateFile(file)-> None:
   #close the file
+  file.close()
+  #open the file
   readFile = open("testfile.json", "r")
   writeFile = open("testfile1.json", "w")
   cur_line=0
@@ -412,6 +440,10 @@ def updateFile(filename)-> None:
   globals['file_lines'] = change_lines
   globals['deletions'] = 0
   logging.info('SUCCESS: Updated file')
+  #remove the readed file
+  os.remove('testfile.json')
+  #update the name of the new one
+  os.rename('testfile1.json', 'testfile.json')
 
 '''
   checkAndExecute
@@ -441,16 +473,16 @@ def checkAndExecute(option:str) -> None:
       createTweet()
     elif option == 'd' or option == 'D':
       logging.info('Called "DELETE" process')
-      print(option + " d/D")
+      deleteTweet(curr_tweet_id)
     elif option == '$':
       logging.info('Called "READ_LAST" process')
       readLastTweet(JsonFile)
     elif option == '-':
       logging.info('Called "READ_PREVIOUS" process')
-      print(option + " -")
+      read_one_down(JsonFile)
     elif option == '+':
       logging.info('Called "READ_NEXT" process')
-      print(option + " +")
+      read_one_up(JsonFile)
     elif option == '=': # testing scenario # testing done
       logging.info('Called "PRINT_CURRENT_ID" process')
       print(curr_tweet_id)
@@ -459,9 +491,10 @@ def checkAndExecute(option:str) -> None:
       sys.exit("\nExiting program")
     elif option == 'w' or option == 'W':
       logging.info('Called "WRITE" process')
-      print(option + " w/W")
+      updateFile(JsonFile)
     elif option == 'x' or option == 'X':
       logging.info('Called "x" function')
+      updateFile(JsonFile)
       sys.exit("\nExiting program")
     elif option =='h':  #testing scenario # testing done
       logging.info('Called for help')
@@ -497,28 +530,27 @@ def checkAndExecute(option:str) -> None:
       help()
 
 
+def execution():
+  ######################EXECUTION PART######################
+  print("Twitter Editor and Viewer")
 
-######################EXECUTION PART######################
-print("Twitter Editor and Viewer")
-
-### File opening.
-try:
-    #open as binary helps with SEEK etc.
+  ### File opening.
+  try:
+    # open as binary helps with SEEK etc.
     JsonFile = open("testfile.json", "rb")
     print("Please wait while the file is opening")
     file_lines = file_len(JsonFile)
     change_lines = file_lines
     logging.info('File opened successfully')
-    #print(file_lines)
-except OSError:
+    # print(file_lines)
+  except OSError:
     logging.exception('Failed to open specified file')
     sys.exit("File opening failed. The program will now terminate")
 
-# The following code runs as a do while
-choice = input("Give your choice:\t")
-#checkAndExecute(choice)
-
-while True:
-  checkAndExecute(choice)
+  # The following code runs as a do while
   choice = input("Give your choice:\t")
+  # checkAndExecute(choice)
 
+  while True:
+    checkAndExecute(choice)
+    choice = input("Give your choice:\t")
