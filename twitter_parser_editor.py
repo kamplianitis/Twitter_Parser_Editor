@@ -12,25 +12,161 @@ from unittest import mock
 from nose.tools import *
 
 
-class TestCreateTweet(TestCase):
-    def test_createTweet(self):
-        print("CreateTweet Test:")
-        tweet_text = "Test Create"
-        date = datetime.now()
-        expected_changes_list = [1, "create", {"text": tweet_text, "created_at": date.strftime("%d/%m/%Y %H:%M:%S")}]
-        original_input = mock.builtins.input
-        mock.builtins.input = lambda _: tweet_text
-        createTweet()
-        self.assertListEqual([expected_changes_list], changesList,msg="\tCHECK TWEET CHANGESLIST: FAIL")
-        print("\tCHECK TWEET CHANGESLIST: PASS")
-        self.assertEqual(change_lines, 1, msg="\tCHECK FILE LINES: FAIL")
-        print("\tCHECK FILE LINES: PASS")
-        self.assertEqual(curr_tweet_id, 1, msg="\tCHECK CURRENT TWEET ID: FAIL")
-        print("\tCHECK CURRENT TWEET ID: PASS")
+class TestParserEditor(TestCase):
+
+  def resetGlobals(self):
+    changesList.clear()
+    globals()['change_lines'] = file_lines
+    deletion_numbers_list.clear()
+    globals()['deletions'] =0
+
+  def test_createTweet(self):
+    print("CreateTweet Test:")
+    tweet_text = "Test Create"
+    date = datetime.now()
+    test_lines = change_lines
+    expected_changes_list = [change_lines+1, "create", {"text": tweet_text, "created_at": date.strftime("%d/%m/%Y %H:%M:%S")}]
+    original_input = mock.builtins.input
+    mock.builtins.input = lambda _: tweet_text
+    createTweet()
+    self.assertListEqual([expected_changes_list], changesList,msg="\tCHECK TWEET CHANGESLIST: FAIL")
+    print("\tCHECK TWEET CHANGESLIST: PASS")
+    self.assertEqual(change_lines,test_lines+1 , msg="\tCHECK FILE LINES: FAIL")
+    print("\tCHECK FILE LINES: PASS")
+    self.assertEqual(curr_tweet_id, test_lines+1, msg="\tCHECK CURRENT TWEET ID: FAIL")
+    print("\tCHECK CURRENT TWEET ID: PASS")
+
+  def test_deleteTweet_from_changesList(self):
+    print("Delete List From Changes_List Test:")
+    tweet_text = "Test Create"
+    test_lines = change_lines
+    expected_changes_list = [change_lines, "delete"]
+    deleteTweet(curr_tweet_id)
+    self.assertListEqual([expected_changes_list], changesList, msg="\tCHECK TWEET CHANGESLIST: FAIL")
+    print("\tCHECK TWEET CHANGESLIST: PASS")
+    self.assertEqual(change_lines, test_lines - 1, msg="\tCHECK FILE LINES: FAIL")
+    print("\tCHECK FILE LINES: PASS")
+    self.assertEqual(curr_tweet_id, test_lines - 1, msg="\tCHECK CURRENT TWEET ID: FAIL")
+    print("\tCHECK CURRENT TWEET ID: PASS")
+    self.assertEqual(deletions, 1, msg="\tCHECK CURRENT TWEET ID: FAIL")
+    print("\tCHECK Deletions: PASS")
+
+  def test_deleteTweet_from_file_no_list(self):
+    print("\nDeleteTweet Test:")
+    tweet_text = "Test Delete"
+    changesList.clear()
+    globals()['changes_lines'] = file_lines
+    test_lines = change_lines
+    expected_changes_list = [1, "delete"]
+    deleteTweet(1)
+    self.assertListEqual([expected_changes_list], changesList, msg="\tCHECK TWEET CHANGESLIST: FAIL")
+    print("\tCHECK TWEET CHANGESLIST: PASS")
+    self.assertEqual(change_lines, test_lines -1, msg="\tCHECK FILE LINES: FAIL")
+    print("\tCHECK FILE LINES: PASS")
+    self.assertEqual(curr_tweet_id, 1, msg="\tCHECK CURRENT TWEET ID: FAIL")
+    print("\tCHECK CURRENT TWEET ID: PASS")
+
+  def test_update_in_empty_changes_list(self):
+    print("\nUpdateTweet Test Empty changes_list:")
+    self.resetGlobals()
+    test_lines = change_lines
+    tweet_text = "Test Update"
+    date = datetime.now()
+    expected_changes_list = [56, "update",{"text": tweet_text, "created_at": date.strftime("%d/%m/%Y %H:%M:%S")}]
+    original_input = mock.builtins.input
+    mock.builtins.input = lambda _: tweet_text
+    updateTweet(56)
+    self.assertListEqual([expected_changes_list], changesList, msg="\tCHECK TWEET CHANGESLIST: FAIL")
+    print("\tCHECK TWEET CHANGESLIST: PASS")
+    self.assertEqual(change_lines, test_lines, msg="\tCHECK FILE LINES: FAIL")
+    print("\tCHECK FILE LINES: PASS")
+    self.assertEqual(curr_tweet_id, 56, msg="\tCHECK CURRENT TWEET ID: FAIL")
+    print("\tCHECK CURRENT TWEET ID: PASS")
+
+  def test_update_in_full_changes_list(self):
+    print("\nUpdateTweet Test With Full changes_list:")
+    self.resetGlobals()
+    tweet_text = "Test Create"
+    date = datetime.now()
+    test_lines = change_lines
+    original_input = mock.builtins.input
+    mock.builtins.input = lambda _: tweet_text
+    createTweet()
+    tweet_text2 = "Tweet Update"
+    expected_changes_list = [[test_lines + 1, "create", {"text": tweet_text, "created_at": date.strftime("%d/%m/%Y %H:%M:%S")}],[56, "update",{"text": tweet_text2, "created_at": date.strftime("%d/%m/%Y %H:%M:%S")}]]
+    original_input = mock.builtins.input
+    mock.builtins.input = lambda _: tweet_text2
+    updateTweet(56)
+    self.assertListEqual(expected_changes_list, changesList, msg="\tCHECK TWEET CHANGESLIST: FAIL")
+    print("\tCHECK TWEET CHANGESLIST: PASS")
+    self.assertEqual(change_lines, test_lines+1, msg="\tCHECK FILE LINES: FAIL")
+    print("\tCHECK FILE LINES: PASS")
+    self.assertEqual(curr_tweet_id, 56, msg="\tCHECK CURRENT TWEET ID: FAIL")
+    print("\tCHECK CURRENT TWEET ID: PASS")
+
+  def test_update_changes_list(self):
+    print("\nUpdateTweet Test With Full changes_list:")
+    self.resetGlobals()
+    tweet_text = "Test Create"
+    date = datetime.now()
+    test_lines = change_lines
+    original_input = mock.builtins.input
+    mock.builtins.input = lambda _: tweet_text
+    createTweet()
+    tweet_text2 = "Tweet Update"
+    expected_changes_list = [
+      [test_lines + 1, "update", {"text": tweet_text2, "created_at": date.strftime("%d/%m/%Y %H:%M:%S")}]]
+    original_input = mock.builtins.input
+    mock.builtins.input = lambda _: tweet_text2
+    updateTweet(test_lines+1)
+    self.assertListEqual(expected_changes_list, changesList, msg="\tCHECK TWEET CHANGESLIST: FAIL")
+    print("\tCHECK TWEET CHANGESLIST: PASS")
+    self.assertEqual(change_lines, test_lines + 1, msg="\tCHECK FILE LINES: FAIL")
+    print("\tCHECK FILE LINES: PASS")
+    self.assertEqual(curr_tweet_id, test_lines+1, msg="\tCHECK CURRENT TWEET ID: FAIL")
+    print("\tCHECK CURRENT TWEET ID: PASS")
+
+  def test_print_curr_tweet_id(self):
+    print("\nPrint current tweet directory")
+    self.resetGlobals()
+    tweet_text = "Test Create"
+    test_lines = change_lines
+    original_input = mock.builtins.input
+    mock.builtins.input = lambda _: tweet_text
+    createTweet()
+    self.assertEqual(change_lines, test_lines + 1, msg="\tCHECK FILE LINES: FAIL")
+    print("\tCHECK FILE LINES: PASS")
+    self.assertEqual(curr_tweet_id, test_lines + 1, msg="\tCHECK CURRENT TWEET ID: FAIL")
+    print("\tCHECK CURRENT TWEET ID: PASS")
+
+
+  def test_read_last_no_deletion_no_changelist(self):
+    print("\nRead last tweet no deletion no change list")
+    self.resetGlobals()
+    test_lines = change_lines
+    readLastTweet(JsonFile)
+    self.assertEqual(change_lines, test_lines, msg="\tCHECK FILE LINES: FAIL")
+    print("\tCHECK FILE LINES: PASS")
+    self.assertEqual(curr_tweet_id, test_lines, msg="\tCHECK CURRENT TWEET ID: FAIL")
+    print("\tCHECK CURRENT TWEET ID: PASS")
+
+  def test_read_last_deletion(self):
+    print("\nRead last tweet with deletion")
+    self.resetGlobals()
+    test_lines = change_lines
+    test_id = curr_tweet_id
+    deleteTweet(test_id)
+    deleteTweet(test_id-1)
+    readLastTweet(JsonFile)
+    self.assertEqual(change_lines, test_lines-2, msg="\tCHECK FILE LINES: FAIL")
+    print("\tCHECK FILE LINES: PASS")
+    self.assertEqual(curr_tweet_id, test_lines-2, msg="\tCHECK CURRENT TWEET ID: FAIL")
+    print("\tCHECK CURRENT TWEET ID: PASS")
 
 
 if __name__ == '__main__':
     unittest.main()
+
 
 #####################GLOBAL VARIABLES#############################
 # changes List.. this will be list in order to not be immutable
@@ -113,13 +249,21 @@ def createTweet() -> None: #testing function # testing done
     alligns with the same field found. 
 '''
 def search_in_changelist(lines:int) -> str:
-  i=0
   for i in range(len(changesList)):
     if lines == changesList[i][0] and changesList[i][1] != 'delete':
       return str(changesList[i][2]['text'])
     elif lines == changesList[i][0] and changesList[i][1] == 'delete':
       return str(changesList[i][1])
   return None
+
+def search_greatest_in_changelist() -> str:
+  great=0
+  for i in range(len(changesList)):
+    line = changesList[great][0]
+    if line <= changesList[i][0] and changesList[i][1] != 'delete':
+      great = i
+  return str(changesList[great][2]['text'])
+
 
 '''
   search_for_update
@@ -162,6 +306,11 @@ def deleteTweet(curr_tweet_id:int)-> None:
   # update the necessary variables to keep track 
   globals()['deletions'] = deletions +1
   globals()['change_lines'] = change_lines -1
+
+  if (curr_tweet_id-1 == change_lines):
+    globals()['curr_tweet_id'] = change_lines
+  else:
+    globals()['curr_tweet_id'] =curr_tweet_id
   # update the list of deletions in order to keep track 
   deletion_numbers_list.append(curr_tweet_id)
   logging.info('SUCCESS: Tweet deleted')
@@ -197,7 +346,7 @@ def check_deletions(line: int)-> int:
     Reads the line that exists n number of lines from EOF. Defaults to 1, since defaulting to 0
     would end up with returning the EOF character itself.
 '''
-def read_n_to_last_line(filename, n = 1):
+def read_n_to_last_line(filename, n = 1) -> str:
   num_newlines = 0
   try:
     filename.seek(-2, os.SEEK_END)    
@@ -205,52 +354,14 @@ def read_n_to_last_line(filename, n = 1):
       filename.seek(-2, os.SEEK_CUR)
       if filename.read(1) == b'\n':
         num_newlines += 1
+    last_line = str(filename.readline().decode())
+    result = json.loads(str(last_line))
+    logging.info('SUCCESS: Read n lines from EOF')
+    return result['text']
   except OSError:
     logging.exception('FAILED: Seeking EOF')
     filename.seek(0)
-    last_line = filename.readline().decode()
-
-  logging.info('SUCCESS: Read n lines from EOF')
-  return last_line
-
-
-
-'''
-  readSpecificTweet
-
-  #TODO: read specific lines in the file --> 
-  #TODO: read from changes list --> done
-  #TODO: read from locality list --> 
-  #TODO: update locality list --> 
-  Arguements:
-    Arg1: int: line  -> specific line that is searching
-  
-  Description:
-    #TODO:
-'''
-def readSpecificTweet(line: int, filename) -> None:
-  #first thing to do search if the current line number is in change list
-  if( line > change_lines): #maybe try catch there
-    print("No such many tweets")
-  else:
-    if deletions ==0:
-      tweet_text = search_in_changelist(line)
-      if tweet_text == None:
-        search_line = file_lines - line +1 #find the corresponding line from the end
-        ###### needs json decode 
-        read_n_to_last_line(filename, search_line)
-      else:
-        print("The text of the tweet with tweet id "+ str(line) +" is: \n" + tweet_text)
-    else:
-      new_line = line + check_deletions(line) 
-      tweet_text = search_in_changelist(new_line)
-      if tweet_text == None:
-        search_line = file_lines - new_line +1 #find the corresponding line from the end
-        read_n_to_last_line(filename, search_line)
-      else:
-        print("The text of the tweet with tweet id "+ str(line) +" is: \n" +tweet_text)
-      globals['curr_tweet_id'] = line
-  logging.info('SUCCESS: Read tweet_id tweet')
+    return None
 
 '''
   updateTweet
@@ -291,23 +402,26 @@ def updateTweet(line: int) -> None:
 '''
 def readLastTweet(JsonFile) -> None:
   if(file_lines == change_lines):
-    # assume no deletion has been done for now
-    try: 
-        JsonFile.seek(-2, os.SEEK_END)
-        while JsonFile.read(1) != b'\n':
-            JsonFile.seek(-2, os.SEEK_CUR)
-        text = (JsonFile.readline().decode()) # take the tweet with the last tweet_id as a string
+    if(deletions==0):
+      try:
+          JsonFile.seek(-2, os.SEEK_END)
+          while JsonFile.read(1) != b'\n':
+              JsonFile.seek(-2, os.SEEK_CUR)
+          text = (JsonFile.readline().decode()) # take the tweet with the last tweet_id as a string
 
-        result = json.loads(text) #convert it to json dict
-        print("The text of the tweet with tweet id "+ str(change_lines) +" is: \n" +result['text']) #can only concat str not int
-    except OSError: #Case we cannot seek in the file ... mainly this will throw cause of wrong opening (not in binary)
-        JsonFile.seek(0)
-        print("Something went wrong")
+          result = json.loads(text) #convert it to json dict
+          print("The text of the tweet with tweet id "+ str(change_lines) +" is: \n" +result['text']) #can only concat str not int
+      except OSError: #Case we cannot seek in the file ... mainly this will throw cause of wrong opening (not in binary)
+          JsonFile.seek(0)
+          print("Something went wrong")
+    else:
+      text = search_greatest_in_changelist()
+      print("The text of the tweet with tweet id " + str(change_lines) + " is: \n" + str(text))
   elif(file_lines < change_lines):
     text = search_in_changelist(change_lines) # python doest not print callbacks
     print("The text of the tweet with tweet id "+ str(change_lines) +" is: \n" + str(text))
-  else:
-    sys.exit("Possible corrupted file.\nAll changes have been reverted.\nProgram Exiting")
+  elif change_lines < file_lines:
+    read_tweet(JsonFile,change_lines)
   #Update curr_tweet_id. change lines will always have the right amount of lines that should be in the file
   globals()['curr_tweet_id'] = change_lines
   logging.info('SUCCESS: Read previous tweet')
@@ -348,73 +462,27 @@ def help(): #testing function # testing done
     Reads the tweet with the provided tweet_id value. Mode can be -1, 0, 1, which represents the upper adjacent 
     tweet, current tweet, and lower adjacent tweet. This value is passed by other system functions and not the user.
 '''
-def read_tweet(filename,
-               curr_tweet_id: int,
-               mode: int = 0) -> None:
+def read_tweet(filename,curr_tweet_id: int,mode: int = 0) -> None:
   if curr_tweet_id + mode < change_lines:
-    deletion_position = check_deletions()
+    deletion_position = check_deletions(curr_tweet_id + mode)
     if deletion_position == 0:
       tweet_text = search_in_changelist(curr_tweet_id + mode)
       if tweet_text is None:
         search_line = file_lines - (curr_tweet_id + mode) + mode #find the corresponding line from the end
-        read_n_to_last_line(filename, search_line)
+        print(read_n_to_last_line(filename, search_line))
       else:
         print("The text of the tweet with tweet id "+ str(curr_tweet_id+1) +" is: \n" + tweet_text)
     else:
       tweet_text = search_in_changelist(curr_tweet_id + mode + deletion_position)
       if tweet_text is None:
         search_line = file_lines - (curr_tweet_id + mode) + mode #find the corresponding line from the end
-        read_n_to_last_line(filename, search_line)
+        print(read_n_to_last_line(filename, search_line))
       else:
         print("The text of the tweet with tweet id "+ str(curr_tweet_id + mode) +" is: \n" + tweet_text)
-    globals['curr_tweet_id'] = curr_tweet_id+1
+    globals()['curr_tweet_id'] = curr_tweet_id + mode
   else: # we are at the end of the file
     print("There are no more lines")
   logging.info('SUCCESS: Read current tweet')
-
-def read_one_down(filename)->None:
-  if curr_tweet_id+1 < change_lines:
-    deletion_position = check_deletions()
-    if deletion_position == 0: 
-      string = search_in_changelist(curr_tweet_id+1)
-      if string== None:
-        search_line = file_lines - (curr_tweet_id+1) +1 #find the corresponding line from the end
-        read_n_to_last_line(filename, search_line)
-      else:
-        print("The text of the tweet with tweet id "+ str(curr_tweet_id+1) +" is: \n" +string)
-    else:
-      string = search_in_changelist(curr_tweet_id+1+deletion_position)
-      if string== None:
-        search_line = file_lines - (curr_tweet_id+1) + 1 #find the corresponding line from the end
-        read_n_to_last_line(filename, search_line)
-      else:
-        print("The text of the tweet with tweet id "+ str(curr_tweet_id+1) +" is: \n" +string)
-    globals['curr_tweet_id'] = curr_tweet_id+1
-  else: # we are at the end of the file
-    print("There are no more lines")
-  logging.info('SUCCESS: Read lower adjacent tweet')
-
-def read_one_up(filename)->None:
-  if curr_tweet_id-1 < 0:
-    print("You have reached the top of the file. No more tweets to read")
-  else:
-    deletion_position = check_deletions()
-    if deletion_position == 0: 
-      string = search_in_changelist(curr_tweet_id-1)
-      if string== None:
-        search_line = file_lines - (curr_tweet_id-1) +1 #find the corresponding line from the end
-        read_n_to_last_line(filename, search_line)
-      else:
-        print("The text of the tweet with tweet id "+ str(curr_tweet_id-1) +" is: \n" +string)
-    else:
-      string = search_in_changelist(curr_tweet_id-1+deletion_position)
-      if string== None:
-        search_line = file_lines - (curr_tweet_id-1) + 1 #find the corresponding line from the end
-        read_n_to_last_line(filename, search_line)
-      else:
-        print("The text of the tweet with tweet id "+ str(curr_tweet_id+1) +" is: \n" +string)
-    globals['curr_tweet_id'] = curr_tweet_id-1
-  logging.info('SUCCESS: Read upper adjacent tweet')
 
 def updateFile(file)-> None:
   #close the file
@@ -479,10 +547,10 @@ def checkAndExecute(option:str) -> None:
       readLastTweet(JsonFile)
     elif option == '-':
       logging.info('Called "READ_PREVIOUS" process')
-      read_one_down(JsonFile)
+      read_tweet(JsonFile, int(curr_tweet_id), int(-1))
     elif option == '+':
       logging.info('Called "READ_NEXT" process')
-      read_one_up(JsonFile)
+      read_tweet(JsonFile, int(curr_tweet_id), int(1))
     elif option == '=': # testing scenario # testing done
       logging.info('Called "PRINT_CURRENT_ID" process')
       print(curr_tweet_id)
@@ -509,7 +577,7 @@ def checkAndExecute(option:str) -> None:
       print(option)
       optionT = option.split('r', 1)
       try:
-        readSpecificTweet(int(optionT[1])) 
+        read_tweet(JsonFile, int(optionT[1]) + 1, int(0))
       except: # testing scenario # testing done
         logging.exception('Invalid argument for "READ_TWEET" input')
         print("\nThe given argument does not translate to integer")
@@ -529,23 +597,10 @@ def checkAndExecute(option:str) -> None:
       print("\nError: Wrong given argument")
       help()
 
-
 def execution():
   ######################EXECUTION PART######################
   print("Twitter Editor and Viewer")
 
-  ### File opening.
-  try:
-    # open as binary helps with SEEK etc.
-    JsonFile = open("testfile.json", "rb")
-    print("Please wait while the file is opening")
-    file_lines = file_len(JsonFile)
-    change_lines = file_lines
-    logging.info('File opened successfully')
-    # print(file_lines)
-  except OSError:
-    logging.exception('Failed to open specified file')
-    sys.exit("File opening failed. The program will now terminate")
 
   # The following code runs as a do while
   choice = input("Give your choice:\t")
@@ -554,3 +609,18 @@ def execution():
   while True:
     checkAndExecute(choice)
     choice = input("Give your choice:\t")
+
+### File opening.
+try:
+  # open as binary helps with SEEK etc.
+  JsonFile = open("testfile.json", "rb")
+  print("Please wait while the file is opening")
+  file_lines = file_len(JsonFile)
+  change_lines = file_lines
+  logging.info('File opened successfully')
+  # print(file_lines)
+except OSError:
+  logging.exception('Failed to open specified file')
+  sys.exit("File opening failed. The program will now terminate")
+
+read_tweet(JsonFile, 399)
