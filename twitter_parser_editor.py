@@ -18,6 +18,10 @@ Enable logging according to the logger configuration file
 logging.config.fileConfig(fname='logger.conf', disable_existing_loggers=False)
 logger = logging.getLogger(__name__)
 
+
+def emptyfunc:
+  return None
+
 class TestParserEditor(TestCase):
 
   def resetGlobals(self):
