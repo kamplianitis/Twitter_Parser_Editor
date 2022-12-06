@@ -8,8 +8,8 @@ import logging.config
 from bisect import bisect # checks in a list where a number should be put. e.g. list=[1,5,10,58] test=6 return 2s
 
 ###################TESTING########################################
-from unittest import TestCase
-from unittest import mock
+from unittest2 import TestCase
+from unittest2 import mock
 from nose.tools import *
 
 '''
@@ -623,3 +623,6 @@ try:
 except OSError:
   logger.exception('FAILED: OS file exception')
   sys.exit("File opening failed. The program will now terminate")
+
+
+execution()
