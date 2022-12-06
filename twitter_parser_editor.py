@@ -4,6 +4,7 @@ import sys # sys.exit, exceptions
 import os # io, exceptions
 import json # decode binary file to ascii
 import logging
+import logging.config
 from bisect import bisect # checks in a list where a number should be put. e.g. list=[1,5,10,58] test=6 return 2s
 
 ###################TESTING########################################
@@ -11,6 +12,11 @@ from unittest import TestCase
 from unittest import mock
 from nose.tools import *
 
+'''
+Enable logging according to the logger configuration file
+'''
+logging.config.fileConfig(fname='logger.conf', disable_existing_loggers=False)
+logger = logging.getLogger(__name__)
 
 class TestParserEditor(TestCase):
 
@@ -180,11 +186,6 @@ deletions = 0 # number of deletions made
 deletion_numbers_list=[] # keeps the number of lines that are going to be deleted
 file_lines =0 # initial lines of the file
 
-'''
-Enabling logging functionality
-'''
-logging.basicConfig(filename='logs.log', filemode="w", level=logging.INFO,
-                    format='%(asctime)s:%(name)s:%(levelname)s:%(message)s')
 ######################FUNCTION PART#############################
 # changes List.. this will be list in order to not be immutable
 
@@ -216,19 +217,19 @@ def file_len(f):
     In the end it updates the current tweet id to the new one.
 '''
 def createTweet() -> None: #testing function # testing done
-  tweet_text = input("Please share your thoughts:\t")
-  # need the first dict to keep track of twitter_id in the changes list and update the 
-  globals()['change_lines'] = change_lines + 1
-  # take the date from the lib
-  date = datetime.now() 
+    tweet_text = input("Please share your thoughts:\t")
+    # need the first dict to keep track of twitter_id in the changes list and update the
+    globals()['change_lines'] = change_lines + 1
+    # take the date from the lib
+    date = datetime.now()
 
-  # append to the changes list. 
-  # format the date while putting in dictionary
-  changesList.append([change_lines, "create", {"text": tweet_text, "created_at": date.strftime("%d/%m/%Y %H:%M:%S")}])
+    # append to the changes list.
+    # format the date while putting in dictionary
+    changesList.append([change_lines, "create", {"text": tweet_text, "created_at": date.strftime("%d/%m/%Y %H:%M:%S")}])
 
-  #update curr_tweet_id to the new one
-  globals()['curr_tweet_id'] = change_lines
-  logging.info('SUCCESS: Created tweet')
+    # update curr_tweet_id to the new one
+    globals()['curr_tweet_id'] = change_lines
+    logger.info('SUCCESS: Created tweet')
 
 '''
   search_in_changelist
@@ -313,7 +314,7 @@ def deleteTweet(curr_tweet_id:int)-> None:
     globals()['curr_tweet_id'] =curr_tweet_id
   # update the list of deletions in order to keep track 
   deletion_numbers_list.append(curr_tweet_id)
-  logging.info('SUCCESS: Tweet deleted')
+  logger.info('SUCCESS: Tweet deleted')
 
 
 '''
@@ -330,7 +331,7 @@ def deleteTweet(curr_tweet_id:int)-> None:
 def check_deletions(line: int)-> int:
   # sort the array
   deletion_numbers_list.sort()
-  logging.info('SUCCESS: Deletions sorted')
+  logger.info('SUCCESS: Deletions sorted')
   return int (bisect(deletion_numbers_list, line))
 
 
@@ -356,10 +357,10 @@ def read_n_to_last_line(filename, n = 1) -> str:
         num_newlines += 1
     last_line = str(filename.readline().decode())
     result = json.loads(str(last_line))
-    logging.info('SUCCESS: Read n lines from EOF')
+    logger.info('SUCCESS: Read n lines from EOF')
     return result['text']
   except OSError:
-    logging.exception('FAILED: Seeking EOF')
+    logger.exception('FAILED: Seeking EOF')
     filename.seek(0)
     return None
 
@@ -382,7 +383,7 @@ def updateTweet(line: int) -> None:
       changesList[check_str] = [line, "update" ,{"text":tweet_text , "created_at": date.strftime("%d/%m/%Y %H:%M:%S")}]
   #update curr_tweet_id to the new one
   globals()['curr_tweet_id'] = line
-  logging.info('SUCCESS: Tweet updated')
+  logger.info('SUCCESS: Tweet updated')
 
 '''
   readLastTweet
@@ -413,6 +414,7 @@ def readLastTweet(JsonFile) -> None:
           print("The text of the tweet with tweet id "+ str(change_lines) +" is: \n" +result['text']) #can only concat str not int
       except OSError: #Case we cannot seek in the file ... mainly this will throw cause of wrong opening (not in binary)
           JsonFile.seek(0)
+          logger.info('FAILED: OS file exception in readLastTweet')
           print("Something went wrong")
     else:
       text = search_greatest_in_changelist()
@@ -424,7 +426,7 @@ def readLastTweet(JsonFile) -> None:
     read_tweet(JsonFile,change_lines)
   #Update curr_tweet_id. change lines will always have the right amount of lines that should be in the file
   globals()['curr_tweet_id'] = change_lines
-  logging.info('SUCCESS: Read previous tweet')
+  logger.info('SUCCESS: Read previous tweet')
 
 '''
   help
@@ -446,7 +448,7 @@ def help(): #testing function # testing done
   print("q : Quit without save")
   print("w : (Over)write file to disk")
   print("x : Exit and save")
-  logging.info('SUCCESS: Displayed help message')
+  logger.info('SUCCESS: Displayed help message')
 
 '''
   #TODO: Test this function
@@ -482,7 +484,7 @@ def read_tweet(filename,curr_tweet_id: int,mode: int = 0) -> None:
     globals()['curr_tweet_id'] = curr_tweet_id + mode
   else: # we are at the end of the file
     print("There are no more lines")
-  logging.info('SUCCESS: Read current tweet')
+  logger.info('SUCCESS: Read current tweet')
 
 def updateFile(file)-> None:
   #close the file
@@ -507,7 +509,7 @@ def updateFile(file)-> None:
   deletion_numbers_list.clear()
   globals['file_lines'] = change_lines
   globals['deletions'] = 0
-  logging.info('SUCCESS: Updated file')
+  logger.info('SUCCESS: Updated file')
   #remove the readed file
   os.remove('testfile.json')
   #update the name of the new one
@@ -537,58 +539,58 @@ def updateFile(file)-> None:
 def checkAndExecute(option:str) -> None: 
   if len(option) == 1: 
     if option == 'C' or option == 'c': # testing scenario # testing done
-      logging.info('Called "CREATE" process')
+      logger.info('Called "CREATE" process')
       createTweet()
     elif option == 'd' or option == 'D':
-      logging.info('Called "DELETE" process')
+      logger.info('Called "DELETE" process')
       deleteTweet(curr_tweet_id)
     elif option == '$':
-      logging.info('Called "READ_LAST" process')
+      logger.info('Called "READ_LAST" process')
       readLastTweet(JsonFile)
     elif option == '-':
-      logging.info('Called "READ_PREVIOUS" process')
+      logger.info('Called "READ_PREVIOUS" process')
       read_tweet(JsonFile, int(curr_tweet_id), int(-1))
     elif option == '+':
-      logging.info('Called "READ_NEXT" process')
+      logger.info('Called "READ_NEXT" process')
       read_tweet(JsonFile, int(curr_tweet_id), int(1))
     elif option == '=': # testing scenario # testing done
-      logging.info('Called "PRINT_CURRENT_ID" process')
+      logger.info('Called "PRINT_CURRENT_ID" process')
       print(curr_tweet_id)
     elif option == 'q' or option == 'Q': # testing scenario # testing done
-      logging.info('Called "Q" function')
+      logger.info('Called "Q" function')
       sys.exit("\nExiting program")
     elif option == 'w' or option == 'W':
-      logging.info('Called "WRITE" process')
+      logger.info('Called "WRITE" process')
       updateFile(JsonFile)
     elif option == 'x' or option == 'X':
-      logging.info('Called "x" function')
+      logger.info('Called "x" function')
       updateFile(JsonFile)
       sys.exit("\nExiting program")
     elif option =='h':  #testing scenario # testing done
-      logging.info('Called for help')
+      logger.info('Called for help')
       help()
     else: # testing scenario #testing done
-      logging.info('Wrong argument input')
+      logger.info('Wrong argument input')
       print("\nError: Wrong given argument")
       help()
   elif len(option) > 1:
     if option[0] == 'r':
-      logging.info('Called "READ_TWEET" function')
+      logger.info('Called "READ_TWEET" function')
       print(option)
       optionT = option.split('r', 1)
       try:
         read_tweet(JsonFile, int(optionT[1]) + 1, int(0))
       except: # testing scenario # testing done
-        logging.exception('Invalid argument for "READ_TWEET" input')
+        logger.exception('Invalid argument for "READ_TWEET" input')
         print("\nThe given argument does not translate to integer")
         help()
     elif option[0] == 'u':
-      logging.info('Called "UPDATE_TWEET" function')
+      logger.info('Called "UPDATE_TWEET" function')
       optionT = option.split('u')
       try:
         updateTweet(int(optionT[1]))
       except: # testing scenario # testing done
-        logging.exception('Invalid argument for "UPDATE_TWEET" input')
+        logger.exception('Invalid argument for "UPDATE_TWEET" input')
         print("\nThe given argument does not translate to integer")
         help()
     elif option == "help": # testing scenario # testing done
@@ -617,10 +619,7 @@ try:
   print("Please wait while the file is opening")
   file_lines = file_len(JsonFile)
   change_lines = file_lines
-  logging.info('File opened successfully')
-  # print(file_lines)
+  logger.info('SUCCESS: File opened')
 except OSError:
-  logging.exception('Failed to open specified file')
+  logger.exception('FAILED: OS file exception')
   sys.exit("File opening failed. The program will now terminate")
-
-read_tweet(JsonFile, 399)
