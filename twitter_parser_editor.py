@@ -623,3 +623,5 @@ try:
 except OSError:
   logger.exception('FAILED: OS file exception')
   sys.exit("File opening failed. The program will now terminate")
+
+execution()
