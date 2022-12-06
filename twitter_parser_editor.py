@@ -8,8 +8,8 @@ import logging.config
 from bisect import bisect # checks in a list where a number should be put. e.g. list=[1,5,10,58] test=6 return 2s
 
 ###################TESTING########################################
-from unittest2 import TestCase
-from unittest2 import mock
+from unittest import TestCase
+from unittest import mock
 from nose.tools import *
 
 '''
@@ -17,6 +17,10 @@ Enable logging according to the logger configuration file
 '''
 logging.config.fileConfig(fname='logger.conf', disable_existing_loggers=False)
 logger = logging.getLogger(__name__)
+
+
+def emptyfunc:
+  return None
 
 class TestParserEditor(TestCase):
 
@@ -623,6 +627,5 @@ try:
 except OSError:
   logger.exception('FAILED: OS file exception')
   sys.exit("File opening failed. The program will now terminate")
-
 
 execution()
